@@ -209,7 +209,7 @@ export default function SarvSankalp() {
       appSubtitle: "यूएन सतत विकास लक्ष्यों में योगदान",
       dashboard: "डैशबोर्ड",
       myProgress: "मेरी प्रगति",
-      totalPoints: "���ुल अंक",
+      totalPoints: "कुल अंक",
       currentLevel: "वर्तमान स्तर",
       sdgContributions: "एसडीजी योगदान",
       recentActivity: "हाल की गतिविधि"
@@ -307,8 +307,8 @@ export default function SarvSankalp() {
             <button
               onClick={() => setActiveFeature("dashboard")}
               className={`w-full text-left p-3 rounded-lg transition-colors ${
-                activeFeature === "dashboard" 
-                  ? "bg-blue-100 text-blue-700 border border-blue-200" 
+                activeFeature === "dashboard"
+                  ? "bg-blue-100 text-blue-700 border border-blue-200"
                   : "hover:bg-gray-100"
               }`}
             >
@@ -319,6 +319,24 @@ export default function SarvSankalp() {
                 <span className="font-medium">{t.dashboard}</span>
               </div>
             </button>
+
+            {user && (
+              <button
+                onClick={() => setActiveFeature("points")}
+                className={`w-full text-left p-3 rounded-lg transition-colors ${
+                  activeFeature === "points"
+                    ? "bg-green-100 text-green-700 border border-green-200"
+                    : "hover:bg-gray-100"
+                }`}
+              >
+                <div className="flex items-center space-x-3">
+                  <div className="w-8 h-8 bg-green-500 rounded-lg flex items-center justify-center">
+                    <Gift className="h-5 w-5 text-white" />
+                  </div>
+                  <span className="font-medium">Points & Rewards</span>
+                </div>
+              </button>
+            )}
             
             {sdgFeatures.map((feature) => {
               const IconComponent = feature.icon;
