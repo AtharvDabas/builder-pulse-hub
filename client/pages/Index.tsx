@@ -206,7 +206,7 @@ export default function SarvSankalp() {
     },
     hi: {
       appTitle: "सर्वसंकल्प",
-      appSubtitle: "य��एन सतत विकास लक्ष्यों में योगदान",
+      appSubtitle: "यूएन सतत विकास लक्ष्यों मे�� योगदान",
       dashboard: "डैशबोर्ड",
       myProgress: "मेरी प्रगति",
       totalPoints: "कुल अंक",
@@ -486,9 +486,17 @@ export default function SarvSankalp() {
 
       {/* Overlay for mobile sidebar */}
       {sidebarOpen && (
-        <div 
+        <div
           className="fixed inset-0 bg-black bg-opacity-50 z-40 md:hidden"
           onClick={() => setSidebarOpen(false)}
+        />
+      )}
+
+      {/* Authentication Modal */}
+      {showAuth && (
+        <AuthSystem
+          onLogin={handleLogin}
+          onClose={() => setShowAuth(false)}
         />
       )}
     </div>
