@@ -209,7 +209,7 @@ export default function SarvSankalp() {
       appSubtitle: "यूएन सतत विकास लक्ष्यों में योगदान",
       dashboard: "डैशबोर्ड",
       myProgress: "मेरी प्रगति",
-      totalPoints: "कुल अंक",
+      totalPoints: "���ुल अंक",
       currentLevel: "वर्तमान स्तर",
       sdgContributions: "एसडीजी योगदान",
       recentActivity: "हाल की गतिविधि"
@@ -247,22 +247,24 @@ export default function SarvSankalp() {
             </div>
             
             <div className="flex items-center space-x-4">
-              <div className="flex items-center space-x-2">
-                <Badge variant="secondary" className="bg-blue-100 text-blue-800">
-                  <Star className="h-3 w-3 mr-1" />
-                  Level {userLevel}
-                </Badge>
-                <Badge variant="secondary" className="bg-green-100 text-green-800">
-                  <Award className="h-3 w-3 mr-1" />
-                  {userPoints} pts
-                </Badge>
-              </div>
-              
+              {user && (
+                <div className="flex items-center space-x-2">
+                  <Badge variant="secondary" className="bg-blue-100 text-blue-800">
+                    <Star className="h-3 w-3 mr-1" />
+                    Level {user.level}
+                  </Badge>
+                  <Badge variant="secondary" className="bg-green-100 text-green-800">
+                    <Award className="h-3 w-3 mr-1" />
+                    {user.points} pts
+                  </Badge>
+                </div>
+              )}
+
               <Button variant="outline" size="sm">
                 <Bell className="h-4 w-4" />
               </Button>
-              
-              <select 
+
+              <select
                 value={language}
                 onChange={(e) => setLanguage(e.target.value)}
                 className="text-sm border border-gray-300 rounded-md px-2 py-1"
@@ -270,11 +272,24 @@ export default function SarvSankalp() {
                 <option value="en">English</option>
                 <option value="hi">हिंदी</option>
               </select>
-              
-              <Button variant="outline" size="sm">
-                <User className="h-4 w-4 mr-2" />
-                Profile
-              </Button>
+
+              {user ? (
+                <div className="flex items-center space-x-2">
+                  <Button variant="outline" size="sm">
+                    <User className="h-4 w-4 mr-2" />
+                    {user.name}
+                  </Button>
+                  <Button variant="outline" size="sm" onClick={handleLogout}>
+                    <LogOut className="h-4 w-4 mr-2" />
+                    Logout
+                  </Button>
+                </div>
+              ) : (
+                <Button variant="outline" size="sm" onClick={() => setShowAuth(true)}>
+                  <LogIn className="h-4 w-4 mr-2" />
+                  Login
+                </Button>
+              )}
             </div>
           </div>
         </div>
