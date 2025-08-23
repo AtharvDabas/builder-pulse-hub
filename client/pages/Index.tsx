@@ -206,7 +206,7 @@ export default function SarvSankalp() {
     },
     hi: {
       appTitle: "सर्वसंकल्प",
-      appSubtitle: "यूएन सतत विकास लक्ष्यों में योगदान",
+      appSubtitle: "य��एन सतत विकास लक्ष्यों में योगदान",
       dashboard: "डैशबोर्ड",
       myProgress: "मेरी प्रगति",
       totalPoints: "कुल अंक",
@@ -401,7 +401,7 @@ export default function SarvSankalp() {
                 <Card>
                   <CardContent className="p-4 text-center">
                     <Heart className="h-8 w-8 mx-auto mb-2 text-red-500" />
-                    <div className="text-2xl font-bold">23</div>
+                    <div className="text-2xl font-bold">{user?.contributions || 0}</div>
                     <div className="text-sm text-gray-600">Impact Actions</div>
                   </CardContent>
                 </Card>
