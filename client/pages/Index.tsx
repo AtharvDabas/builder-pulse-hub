@@ -1,14 +1,14 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
-import { 
-  Utensils, 
-  Heart, 
-  GraduationCap, 
-  Shield, 
-  Droplets, 
+import {
+  Utensils,
+  Heart,
+  GraduationCap,
+  Shield,
+  Droplets,
   Handshake,
   ShoppingCart,
   Leaf,
@@ -19,10 +19,13 @@ import {
   Globe,
   Menu,
   Bell,
-  Star
+  Star,
+  LogIn,
+  LogOut,
+  Gift
 } from "lucide-react";
 
-// SDG Feature Components (placeholders for now, will be built individually)
+// SDG Feature Components
 import AnnapurnaConnect from "../components/features/AnnapurnaConnect";
 import SehatSathi from "../components/features/SehatSathi";
 import PathshalaPocket from "../components/features/PathshalaPocket";
@@ -33,6 +36,10 @@ import SaksinGreen from "../components/features/SaksinGreen";
 import CarbonKart from "../components/features/CarbonKart";
 import MittiMitra from "../components/features/MittiMitra";
 import NyayaDost from "../components/features/NyayaDost";
+
+// Auth and Rewards Components
+import AuthSystem from "../components/auth/AuthSystem";
+import PointsSystem from "../components/rewards/PointsSystem";
 
 const sdgFeatures = [
   {
@@ -179,7 +186,7 @@ export default function SarvSankalp() {
       totalPoints: "कुल अंक",
       currentLevel: "वर्तमान स्तर",
       sdgContributions: "एसडीजी योगदान",
-      recentActivity: "हाल की गतिव���धि"
+      recentActivity: "हाल की गतिविधि"
     }
   };
 
