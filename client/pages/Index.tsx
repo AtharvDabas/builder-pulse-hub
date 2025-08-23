@@ -188,6 +188,7 @@ export default function SarvSankalp() {
       case "carbon": return <CarbonKart />;
       case "mitti": return <MittiMitra />;
       case "nyaya": return <NyayaDost />;
+      case "points": return user ? <PointsSystem user={user} onPointsUpdate={handlePointsUpdate} /> : null;
       default: return null;
     }
   };
