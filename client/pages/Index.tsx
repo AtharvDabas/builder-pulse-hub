@@ -147,9 +147,34 @@ const sdgFeatures = [
 export default function SarvSankalp() {
   const [activeFeature, setActiveFeature] = useState("dashboard");
   const [sidebarOpen, setSidebarOpen] = useState(false);
-  const [userPoints, setUserPoints] = useState(1250);
-  const [userLevel, setUserLevel] = useState(3);
   const [language, setLanguage] = useState("en");
+  const [showAuth, setShowAuth] = useState(false);
+  const [user, setUser] = useState<any>(null);
+
+  // Load user from localStorage on component mount
+  useEffect(() => {
+    const savedUser = localStorage.getItem('sarvSankalpUser');
+    if (savedUser) {
+      setUser(JSON.parse(savedUser));
+    }
+  }, []);
+
+  const handleLogin = (userData: any) => {
+    setUser(userData);
+  };
+
+  const handleLogout = () => {
+    localStorage.removeItem('sarvSankalpUser');
+    setUser(null);
+    setActiveFeature("dashboard");
+  };
+
+  const handlePointsUpdate = (newPoints: number) => {
+    if (user) {
+      const updatedUser = { ...user, points: newPoints };
+      setUser(updatedUser);
+    }
+  };
 
   const getFeatureComponent = (featureId: string) => {
     switch (featureId) {
