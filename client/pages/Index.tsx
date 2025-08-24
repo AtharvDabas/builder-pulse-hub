@@ -94,9 +94,9 @@ const sdgFeatures = [
   },
   {
     id: "skillhood",
-    title: "Skillhood Lite",
+    title: "Skillhood",
     subtitle: "Decent Work",
-    description: "Skill exchange and development platform",
+    description: "AI skill builder with 1000+ skills and LinkedIn job integration",
     icon: Handshake,
     color: "bg-purple-500",
     sdgColor: "from-purple-400 to-violet-500",
