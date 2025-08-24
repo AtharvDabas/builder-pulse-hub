@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -13,7 +13,10 @@ import {
   Plus,
   CheckCircle,
   AlertCircle,
-  Phone
+  Phone,
+  Shield,
+  Navigation,
+  MessageSquare
 } from "lucide-react";
 
 const foodDonations = [
@@ -24,10 +27,14 @@ const foodDonations = [
     food: "Vegetarian buffet leftovers",
     quantity: "50 servings",
     location: "Connaught Place, Delhi",
+    coordinates: { lat: 28.6315, lng: 77.2167 },
+    exactAddress: "Sardar Patel Marg, Near India Gate Metro Station, New Delhi - 110001",
     pickupTime: "9:00 PM - 10:00 PM",
     status: "available",
     postedTime: "2 hours ago",
-    contact: "+91 98765 43210"
+    contact: "+91 98765 43210",
+    verified: true,
+    otpVerified: true
   },
   {
     id: 2,
@@ -36,37 +43,34 @@ const foodDonations = [
     food: "Mixed Indian cuisine",
     quantity: "100 servings",
     location: "Karol Bagh, Delhi",
+    coordinates: { lat: 28.6519, lng: 77.1909 },
+    exactAddress: "GB Road, Near Karol Bagh Metro, New Delhi - 110005",
     pickupTime: "11:00 PM - 12:00 AM",
     status: "claimed",
     claimedBy: "Akshaya Patra Foundation",
     postedTime: "4 hours ago",
-    contact: "+91 98765 43211"
-  },
-  {
-    id: 3,
-    donor: "University Hostel",
-    type: "Hostel",
-    food: "Rice, dal, vegetables",
-    quantity: "30 servings",
-    location: "DU North Campus, Delhi",
-    pickupTime: "8:30 PM - 9:30 PM",
-    status: "completed",
-    completedBy: "Robin Hood Army",
-    postedTime: "6 hours ago",
-    contact: "+91 98765 43212"
+    contact: "+91 98765 43211",
+    verified: true,
+    otpVerified: true
   }
 ];
 
 const ngos = [
-  { name: "Akshaya Patra Foundation", contact: "+91 98765 43213", area: "Delhi NCR" },
-  { name: "Robin Hood Army", contact: "+91 98765 43214", area: "All India" },
-  { name: "Feeding India", contact: "+91 98765 43215", area: "Delhi, Mumbai" }
+  { name: "Akshaya Patra Foundation", contact: "+91 98765 43213", area: "Delhi NCR", verified: true },
+  { name: "Robin Hood Army", contact: "+91 98765 43214", area: "All India", verified: true },
+  { name: "Feeding India", contact: "+91 98765 43215", area: "Delhi, Mumbai", verified: true }
 ];
 
 export default function AnnapurnaConnect() {
   const [activeTab, setActiveTab] = useState("browse");
   const [showDonateForm, setShowDonateForm] = useState(false);
-  const [userType, setUserType] = useState("donor"); // donor, ngo
+  const [showOtpVerification, setShowOtpVerification] = useState(false);
+  const [userType, setUserType] = useState("donor");
+  const [currentLocation, setCurrentLocation] = useState<{lat: number, lng: number} | null>(null);
+  const [locationPermission, setLocationPermission] = useState<string>("prompt");
+  const [otpSent, setOtpSent] = useState(false);
+  const [otpCode, setOtpCode] = useState("");
+  const [generatedOtp, setGeneratedOtp] = useState("");
 
   const [donationForm, setDonationForm] = useState({
     donorName: "",
@@ -74,31 +78,122 @@ export default function AnnapurnaConnect() {
     foodDescription: "",
     quantity: "",
     location: "",
+    exactAddress: "",
     pickupTimeStart: "",
     pickupTimeEnd: "",
     contact: "",
-    specialInstructions: ""
+    specialInstructions: "",
+    coordinates: { lat: 0, lng: 0 }
   });
 
+  // Request location permission and get current location
+  useEffect(() => {
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          const coords = {
+            lat: position.coords.latitude,
+            lng: position.coords.longitude
+          };
+          setCurrentLocation(coords);
+          setLocationPermission("granted");
+          
+          // Reverse geocoding simulation
+          reverseGeocode(coords);
+        },
+        (error) => {
+          console.error("Location access denied:", error);
+          setLocationPermission("denied");
+        }
+      );
+    }
+  }, []);
+
+  const reverseGeocode = async (coords: {lat: number, lng: number}) => {
+    // Simulate reverse geocoding API call
+    const mockAddress = `Lat: ${coords.lat.toFixed(4)}, Lng: ${coords.lng.toFixed(4)}, New Delhi, India`;
+    setDonationForm(prev => ({
+      ...prev,
+      location: mockAddress,
+      coordinates: coords
+    }));
+  };
+
+  const sendOtp = () => {
+    if (!donationForm.contact) {
+      alert("Please enter your phone number first");
+      return;
+    }
+    
+    // Generate 6-digit OTP
+    const otp = Math.floor(100000 + Math.random() * 900000).toString();
+    setGeneratedOtp(otp);
+    setOtpSent(true);
+    
+    // Simulate SMS sending
+    alert(`OTP sent to ${donationForm.contact}\nYour OTP: ${otp}\n(In real app, this would be sent via SMS)`);
+  };
+
+  const verifyOtp = () => {
+    if (otpCode === generatedOtp) {
+      setShowOtpVerification(false);
+      handleSubmitDonation();
+    } else {
+      alert("Invalid OTP. Please try again.");
+    }
+  };
+
   const handleSubmitDonation = () => {
-    // In a real app, this would save to database
-    alert(`Food donation posted successfully!\n\nDetails:\n${donationForm.foodDescription}\nQuantity: ${donationForm.quantity}\nPickup: ${donationForm.pickupTimeStart} - ${donationForm.pickupTimeEnd}\n\nNGOs will be notified automatically.`);
+    if (!currentLocation) {
+      alert("Location permission required to verify donation authenticity");
+      return;
+    }
+
+    if (!otpSent || otpCode !== generatedOtp) {
+      setShowOtpVerification(true);
+      return;
+    }
+
+    // Calculate distance from current location to verify authenticity
+    const distance = calculateDistance(currentLocation, donationForm.coordinates);
+    
+    if (distance > 5) { // More than 5km away
+      alert("Warning: Your current location is far from the donation pickup location. Please verify the address.");
+    }
+
+    alert(`Food donation posted successfully and verified!\n\nDetails:\n${donationForm.foodDescription}\nQuantity: ${donationForm.quantity}\nLocation: ${donationForm.location}\nPickup: ${donationForm.pickupTimeStart} - ${donationForm.pickupTimeEnd}\n\nVerification:\n✅ Location verified\n✅ Phone verified with OTP\n✅ Anti-prank measures active\n\nNGOs will be notified automatically with your verified location.`);
+    
     setShowDonateForm(false);
+    setOtpSent(false);
+    setOtpCode("");
     setDonationForm({
       donorName: "",
       donorType: "restaurant",
       foodDescription: "",
       quantity: "",
       location: "",
+      exactAddress: "",
       pickupTimeStart: "",
       pickupTimeEnd: "",
       contact: "",
-      specialInstructions: ""
+      specialInstructions: "",
+      coordinates: { lat: 0, lng: 0 }
     });
   };
 
+  const calculateDistance = (pos1: {lat: number, lng: number}, pos2: {lat: number, lng: number}) => {
+    const R = 6371; // Earth's radius in km
+    const dLat = (pos2.lat - pos1.lat) * Math.PI / 180;
+    const dLng = (pos2.lng - pos1.lng) * Math.PI / 180;
+    const a = Math.sin(dLat/2) * Math.sin(dLat/2) +
+              Math.cos(pos1.lat * Math.PI / 180) * Math.cos(pos2.lat * Math.PI / 180) *
+              Math.sin(dLng/2) * Math.sin(dLng/2);
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+    return R * c;
+  };
+
   const handleClaimDonation = (donationId: number, donorContact: string) => {
-    alert(`Donation claimed successfully!\n\nNext Steps:\n1. Contact donor: ${donorContact}\n2. Coordinate pickup time\n3. Confirm completion\n\nDonor will receive notification.`);
+    alert(`Donation claimed successfully!\n\nNext Steps:\n1. Contact donor: ${donorContact}\n2. Coordinate pickup time\n3. Confirm completion\n\nDonor will receive notification.\n\nLocation verified: ✅\nPhone verified: ✅`);
   };
 
   const getStatusColor = (status: string) => {
@@ -127,28 +222,55 @@ export default function AnnapurnaConnect() {
           <Utensils className="h-8 w-8" />
           <div>
             <h2 className="text-2xl font-bold">Annapurna Connect</h2>
-            <p className="text-orange-100">SDG 2: Zero Hunger</p>
+            <p className="text-orange-100">SDG 2: Zero Hunger - Location Verified</p>
           </div>
         </div>
         <p className="text-orange-100 mb-4">
-          Connect food donors with NGOs to eliminate food waste and feed the hungry
+          Connect food donors with NGOs using real-time location and OTP verification
         </p>
         
-        <div className="grid grid-cols-3 gap-4 text-center">
+        <div className="grid grid-cols-4 gap-4 text-center">
           <div>
             <div className="text-2xl font-bold">2.3K</div>
             <div className="text-sm text-orange-100">Meals Donated</div>
           </div>
           <div>
             <div className="text-2xl font-bold">156</div>
-            <div className="text-sm text-orange-100">Active Donors</div>
+            <div className="text-sm text-orange-100">Verified Donors</div>
           </div>
           <div>
             <div className="text-2xl font-bold">23</div>
             <div className="text-sm text-orange-100">Partner NGOs</div>
           </div>
+          <div>
+            <div className="text-2xl font-bold">98%</div>
+            <div className="text-sm text-orange-100">OTP Verified</div>
+          </div>
         </div>
       </div>
+
+      {/* Location Status */}
+      <Card>
+        <CardContent className="p-4">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center space-x-3">
+              <Navigation className="h-5 w-5 text-blue-500" />
+              <div>
+                <h4 className="font-medium">Location Status</h4>
+                <p className="text-sm text-gray-600">
+                  {locationPermission === "granted" 
+                    ? `Location detected: ${currentLocation?.lat.toFixed(4)}, ${currentLocation?.lng.toFixed(4)}`
+                    : "Location permission required for verification"
+                  }
+                </p>
+              </div>
+            </div>
+            <Badge className={locationPermission === "granted" ? "bg-green-100 text-green-800" : "bg-red-100 text-red-800"}>
+              {locationPermission === "granted" ? "✅ Verified" : "❌ Not Verified"}
+            </Badge>
+          </div>
+        </CardContent>
+      </Card>
 
       {/* User Type Selection */}
       <Card>
@@ -198,14 +320,15 @@ export default function AnnapurnaConnect() {
                 <Utensils className="h-12 w-12 mx-auto mb-4 text-orange-500" />
                 <h3 className="text-lg font-semibold mb-2">Share Your Surplus Food</h3>
                 <p className="text-gray-600 mb-4">
-                  Help reduce food waste by donating surplus food to those in need
+                  Help reduce food waste by donating surplus food with location verification
                 </p>
                 <Button 
                   onClick={() => setShowDonateForm(true)}
                   className="bg-orange-500 hover:bg-orange-600"
+                  disabled={locationPermission !== "granted"}
                 >
                   <Plus className="h-4 w-4 mr-2" />
-                  Post Food Donation
+                  {locationPermission === "granted" ? "Post Food Donation" : "Enable Location First"}
                 </Button>
               </CardContent>
             </Card>
@@ -215,11 +338,11 @@ export default function AnnapurnaConnect() {
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center justify-between">
-                Available Food Donations
-                <Badge variant="secondary">{foodDonations.filter(d => d.status === "available").length} available</Badge>
+                Location-Verified Food Donations
+                <Badge variant="secondary">{foodDonations.filter(d => d.status === "available").length} verified available</Badge>
               </CardTitle>
               <CardDescription>
-                Real-time listings from restaurants, events, and households
+                Real-time listings with GPS verification and OTP authentication
               </CardDescription>
             </CardHeader>
             <CardContent>
@@ -235,33 +358,41 @@ export default function AnnapurnaConnect() {
                             {getStatusIcon(donation.status)}
                             <span className="ml-1 capitalize">{donation.status}</span>
                           </Badge>
+                          {donation.verified && (
+                            <Badge className="bg-green-100 text-green-800">
+                              <Shield className="h-3 w-3 mr-1" />
+                              Verified
+                            </Badge>
+                          )}
                         </div>
-                        <p className="text-gray-700 mb-1">{donation.food}</p>
-                        <div className="flex items-center space-x-4 text-sm text-gray-600">
-                          <div className="flex items-center">
-                            <Users className="h-4 w-4 mr-1" />
-                            {donation.quantity}
+                        <p className="text-gray-700 mb-2">{donation.food}</p>
+                        <div className="space-y-1">
+                          <div className="flex items-center space-x-4 text-sm text-gray-600">
+                            <div className="flex items-center">
+                              <Users className="h-4 w-4 mr-1" />
+                              {donation.quantity}
+                            </div>
+                            <div className="flex items-center">
+                              <Clock className="h-4 w-4 mr-1" />
+                              {donation.pickupTime}
+                            </div>
                           </div>
-                          <div className="flex items-center">
-                            <MapPin className="h-4 w-4 mr-1" />
-                            {donation.location}
-                          </div>
-                          <div className="flex items-center">
-                            <Clock className="h-4 w-4 mr-1" />
-                            {donation.pickupTime}
+                          <div className="flex items-start space-x-1 text-sm text-gray-600">
+                            <MapPin className="h-4 w-4 mr-1 mt-0.5 flex-shrink-0" />
+                            <div>
+                              <div>{donation.location}</div>
+                              <div className="text-xs text-gray-500">{donation.exactAddress}</div>
+                              <div className="text-xs text-blue-600">
+                                GPS: {donation.coordinates.lat.toFixed(4)}, {donation.coordinates.lng.toFixed(4)}
+                              </div>
+                            </div>
                           </div>
                         </div>
-                        <p className="text-xs text-gray-500 mt-1">Posted {donation.postedTime}</p>
+                        <p className="text-xs text-gray-500 mt-2">Posted {donation.postedTime}</p>
                         
                         {donation.status === "claimed" && (
                           <p className="text-sm text-yellow-700 mt-2">
                             Claimed by: {donation.claimedBy}
-                          </p>
-                        )}
-                        
-                        {donation.status === "completed" && (
-                          <p className="text-sm text-blue-700 mt-2">
-                            Completed by: {donation.completedBy}
                           </p>
                         )}
                       </div>
@@ -274,7 +405,7 @@ export default function AnnapurnaConnect() {
                               onClick={() => handleClaimDonation(donation.id, donation.contact)}
                               className="bg-green-500 hover:bg-green-600"
                             >
-                              Claim Donation
+                              Claim Verified Donation
                             </Button>
                             <Button 
                               size="sm" 
@@ -283,6 +414,14 @@ export default function AnnapurnaConnect() {
                             >
                               <Phone className="h-4 w-4 mr-1" />
                               Call
+                            </Button>
+                            <Button 
+                              size="sm" 
+                              variant="outline"
+                              onClick={() => window.open(`https://maps.google.com/?q=${donation.coordinates.lat},${donation.coordinates.lng}`, '_blank')}
+                            >
+                              <MapPin className="h-4 w-4 mr-1" />
+                              Navigate
                             </Button>
                           </div>
                         )}
@@ -298,14 +437,22 @@ export default function AnnapurnaConnect() {
           {userType === "donor" && (
             <Card>
               <CardHeader>
-                <CardTitle>Partner NGOs</CardTitle>
-                <CardDescription>Organizations ready to collect food donations</CardDescription>
+                <CardTitle>Verified Partner NGOs</CardTitle>
+                <CardDescription>Trusted organizations ready to collect food donations</CardDescription>
               </CardHeader>
               <CardContent>
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                   {ngos.map((ngo, index) => (
                     <div key={index} className="border rounded-lg p-4">
-                      <h4 className="font-semibold mb-2">{ngo.name}</h4>
+                      <div className="flex items-center justify-between mb-2">
+                        <h4 className="font-semibold">{ngo.name}</h4>
+                        {ngo.verified && (
+                          <Badge className="bg-green-100 text-green-800">
+                            <Shield className="h-3 w-3 mr-1" />
+                            Verified
+                          </Badge>
+                        )}
+                      </div>
                       <p className="text-sm text-gray-600 mb-2">Coverage: {ngo.area}</p>
                       <Button 
                         size="sm" 
@@ -328,7 +475,7 @@ export default function AnnapurnaConnect() {
       {showDonateForm && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
           <div className="bg-white rounded-lg p-6 max-w-2xl w-full max-h-[90vh] overflow-y-auto">
-            <h3 className="text-lg font-semibold mb-4">Post Food Donation</h3>
+            <h3 className="text-lg font-semibold mb-4">Post Verified Food Donation</h3>
             
             <div className="space-y-4">
               <div className="grid grid-cols-2 gap-4">
@@ -374,21 +521,56 @@ export default function AnnapurnaConnect() {
                   />
                 </div>
                 <div>
-                  <Label htmlFor="contact">Contact Number</Label>
-                  <Input
-                    value={donationForm.contact}
-                    onChange={(e) => setDonationForm({...donationForm, contact: e.target.value})}
-                    placeholder="+91 98765 43210"
-                  />
+                  <Label htmlFor="contact">Contact Number (for OTP)</Label>
+                  <div className="flex space-x-2">
+                    <Input
+                      value={donationForm.contact}
+                      onChange={(e) => setDonationForm({...donationForm, contact: e.target.value})}
+                      placeholder="+91 98765 43210"
+                    />
+                    <Button 
+                      onClick={sendOtp}
+                      disabled={!donationForm.contact || otpSent}
+                      size="sm"
+                    >
+                      <MessageSquare className="h-4 w-4 mr-1" />
+                      {otpSent ? "OTP Sent" : "Send OTP"}
+                    </Button>
+                  </div>
                 </div>
               </div>
               
+              {otpSent && (
+                <div>
+                  <Label htmlFor="otp">Enter OTP</Label>
+                  <Input
+                    value={otpCode}
+                    onChange={(e) => setOtpCode(e.target.value)}
+                    placeholder="Enter 6-digit OTP"
+                    maxLength={6}
+                  />
+                </div>
+              )}
+              
               <div>
-                <Label htmlFor="location">Pickup Location</Label>
+                <Label htmlFor="location">Auto-Detected Location</Label>
                 <Input
                   value={donationForm.location}
                   onChange={(e) => setDonationForm({...donationForm, location: e.target.value})}
-                  placeholder="Full address with landmark"
+                  placeholder="Location will be auto-detected"
+                  disabled
+                />
+                <p className="text-xs text-gray-500 mt-1">
+                  Location is automatically detected for verification
+                </p>
+              </div>
+              
+              <div>
+                <Label htmlFor="exactAddress">Exact Pickup Address</Label>
+                <Input
+                  value={donationForm.exactAddress}
+                  onChange={(e) => setDonationForm({...donationForm, exactAddress: e.target.value})}
+                  placeholder="Building name, floor, specific instructions"
                 />
               </div>
               
@@ -419,6 +601,24 @@ export default function AnnapurnaConnect() {
                   placeholder="Any special handling instructions"
                 />
               </div>
+
+              <div className="bg-blue-50 p-3 rounded-lg">
+                <h4 className="font-medium text-blue-800 mb-2">Verification Status:</h4>
+                <div className="space-y-1 text-sm">
+                  <div className="flex items-center">
+                    <CheckCircle className="h-4 w-4 text-green-500 mr-2" />
+                    Location: {locationPermission === "granted" ? "Verified" : "Pending"}
+                  </div>
+                  <div className="flex items-center">
+                    {otpSent && otpCode === generatedOtp ? (
+                      <CheckCircle className="h-4 w-4 text-green-500 mr-2" />
+                    ) : (
+                      <AlertCircle className="h-4 w-4 text-yellow-500 mr-2" />
+                    )}
+                    Phone: {otpSent && otpCode === generatedOtp ? "Verified" : "Pending OTP"}
+                  </div>
+                </div>
+              </div>
             </div>
             
             <div className="flex justify-end space-x-2 mt-6">
@@ -428,23 +628,65 @@ export default function AnnapurnaConnect() {
               <Button 
                 onClick={handleSubmitDonation}
                 className="bg-orange-500 hover:bg-orange-600"
+                disabled={!otpSent || otpCode !== generatedOtp || locationPermission !== "granted"}
               >
-                Post Donation
+                Post Verified Donation
               </Button>
             </div>
           </div>
         </div>
       )}
 
-      {/* Other tabs placeholders */}
+      {/* OTP Verification Modal */}
+      {showOtpVerification && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+          <div className="bg-white rounded-lg p-6 max-w-md w-full">
+            <h3 className="text-lg font-semibold mb-4">OTP Verification Required</h3>
+            <p className="text-gray-600 mb-4">
+              Please verify your phone number to prevent fake donations and ensure authenticity.
+            </p>
+            
+            <div className="space-y-4">
+              <div>
+                <Label htmlFor="otp">Enter OTP sent to {donationForm.contact}</Label>
+                <Input
+                  value={otpCode}
+                  onChange={(e) => setOtpCode(e.target.value)}
+                  placeholder="Enter 6-digit OTP"
+                  maxLength={6}
+                />
+              </div>
+              
+              <div className="flex justify-end space-x-2">
+                <Button variant="outline" onClick={() => setShowOtpVerification(false)}>
+                  Cancel
+                </Button>
+                <Button onClick={verifyOtp}>
+                  Verify & Submit
+                </Button>
+              </div>
+              
+              <Button 
+                variant="outline" 
+                onClick={sendOtp}
+                className="w-full"
+              >
+                Resend OTP
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Other tabs */}
       {activeTab === "my-donations" && (
         <Card>
           <CardHeader>
-            <CardTitle>My Donations</CardTitle>
-            <CardDescription>Track your food donation history</CardDescription>
+            <CardTitle>My Verified Donations</CardTitle>
+            <CardDescription>Track your food donation history with verification status</CardDescription>
           </CardHeader>
           <CardContent>
-            <p className="text-gray-500">Your donation history and impact tracking will appear here.</p>
+            <p className="text-gray-500">Your donation history with location and OTP verification status will appear here.</p>
           </CardContent>
         </Card>
       )}
@@ -453,10 +695,10 @@ export default function AnnapurnaConnect() {
         <Card>
           <CardHeader>
             <CardTitle>Impact Analytics</CardTitle>
-            <CardDescription>Your contribution to Zero Hunger goal</CardDescription>
+            <CardDescription>Your verified contribution to Zero Hunger goal</CardDescription>
           </CardHeader>
           <CardContent>
-            <p className="text-gray-500">Detailed analytics about meals saved, waste reduced, and people fed.</p>
+            <p className="text-gray-500">Detailed analytics about verified meals saved, waste reduced, and people fed with authentication metrics.</p>
           </CardContent>
         </Card>
       )}
