@@ -6,10 +6,10 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
-import { 
-  Heart, 
-  Brain, 
-  AlertTriangle, 
+import {
+  Heart,
+  Brain,
+  AlertTriangle,
   CheckCircle,
   Baby,
   Calendar,
@@ -21,7 +21,7 @@ import {
   Phone,
   Stethoscope,
   Pill,
-  Lotus,
+  Flower,
   Leaf,
   Hospital,
   Navigation,
