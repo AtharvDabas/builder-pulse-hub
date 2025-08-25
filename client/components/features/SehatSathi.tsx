@@ -740,7 +740,7 @@ Note: This is an AI-generated assessment. Please consult a qualified healthcare 
               <Card>
                 <CardHeader>
                   <CardTitle className="flex items-center">
-                    <Lotus className="h-5 w-5 mr-2 text-purple-500" />
+                    <Flower className="h-5 w-5 mr-2 text-purple-500" />
                     Yoga Therapy
                   </CardTitle>
                 </CardHeader>
@@ -748,7 +748,7 @@ Note: This is an AI-generated assessment. Please consult a qualified healthcare 
                   <div className="space-y-3">
                     {analysis.yogaRecommendations.map((yoga: string, index: number) => (
                       <div key={index} className="flex items-start p-3 bg-purple-50 rounded-lg">
-                        <Lotus className="h-5 w-5 text-purple-500 mr-3 mt-0.5 flex-shrink-0" />
+                        <Flower className="h-5 w-5 text-purple-500 mr-3 mt-0.5 flex-shrink-0" />
                         <p className="text-sm">{yoga}</p>
                       </div>
                     ))}
@@ -962,7 +962,7 @@ Note: This is an AI-generated assessment. Please consult a qualified healthcare 
           </CardHeader>
           <CardContent>
             <div className="text-center py-8">
-              <Lotus className="h-12 w-12 mx-auto mb-4 text-purple-500" />
+              <Flower className="h-12 w-12 mx-auto mb-4 text-purple-500" />
               <p className="text-gray-600">Customized yoga sequences and breathing exercises for your health condition.</p>
             </div>
           </CardContent>
