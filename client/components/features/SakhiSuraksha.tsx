@@ -97,6 +97,12 @@ export default function SakhiSuraksha() {
   const [panicActive, setPanicActive] = useState(false);
   const [countdown, setCountdown] = useState(0);
   const [showReportForm, setShowReportForm] = useState(false);
+  const [showFakeCall, setShowFakeCall] = useState(false);
+  const [fakeCallConfig, setFakeCallConfig] = useState({
+    callerName: "Office Manager",
+    duration: 30,
+    ringtone: "default"
+  });
   const [reportForm, setReportForm] = useState({
     category: "",
     location: "",
@@ -144,6 +150,81 @@ export default function SakhiSuraksha() {
 
   const makeCall = (number: string) => {
     window.open(`tel:${number}`, "_self");
+  };
+
+  const triggerFakeCall = (customConfig = {}) => {
+    const config = { ...fakeCallConfig, ...customConfig };
+    setFakeCallConfig(config);
+    setShowFakeCall(true);
+
+    // Vibrate if supported
+    if (navigator.vibrate) {
+      navigator.vibrate([300, 100, 300, 100, 300]);
+    }
+
+    // Play ringtone sound
+    playRingtone();
+
+    // Auto-answer after specified duration if not manually answered
+    setTimeout(() => {
+      if (showFakeCall) {
+        answerFakeCall();
+      }
+    }, config.duration * 1000);
+  };
+
+  const answerFakeCall = () => {
+    setShowFakeCall(false);
+    playFakeConversation();
+  };
+
+  const playRingtone = () => {
+    // Create audio context for ringtone
+    try {
+      const audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
+      const oscillator = audioContext.createOscillator();
+      const gainNode = audioContext.createGain();
+
+      oscillator.connect(gainNode);
+      gainNode.connect(audioContext.destination);
+
+      oscillator.frequency.setValueAtTime(800, audioContext.currentTime);
+      oscillator.type = 'sine';
+
+      gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
+      gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 1);
+
+      oscillator.start(audioContext.currentTime);
+      oscillator.stop(audioContext.currentTime + 1);
+    } catch (error) {
+      console.log('Audio not supported');
+    }
+  };
+
+  const playFakeConversation = () => {
+    // Use Web Speech API for realistic conversation
+    if ('speechSynthesis' in window) {
+      const phrases = [
+        "Hello, this is urgent. I need you to come to the office immediately.",
+        "There's an important meeting that requires your presence.",
+        "The client is waiting and we need you here right now.",
+        "This cannot wait. Please leave whatever you're doing and come here.",
+        "I'm sending a car to pick you up. Be ready in 5 minutes."
+      ];
+
+      const randomPhrase = phrases[Math.floor(Math.random() * phrases.length)];
+      const utterance = new SpeechSynthesisUtterance(randomPhrase);
+      utterance.rate = 0.9;
+      utterance.pitch = 1.1;
+      utterance.volume = 0.8;
+
+      speechSynthesis.speak(utterance);
+
+      // Show conversation interface
+      setTimeout(() => {
+        alert(`Fake Call Active\n\nConversation: "${randomPhrase}"\n\nThis provides you with a realistic excuse to leave the current situation safely.\n\nYou can continue the conversation or end the call as needed.`);
+      }, 2000);
+    }
   };
 
   const submitAnonymousReport = () => {
@@ -444,9 +525,45 @@ export default function SakhiSuraksha() {
           </CardHeader>
           <CardContent>
             <p className="text-sm text-gray-600 mb-4">Generate a fake incoming call to escape unsafe situations</p>
-            <Button className="w-full bg-red-500 hover:bg-red-600">
+
+            {/* Quick Call Options */}
+            <div className="grid grid-cols-2 gap-2 mb-4">
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={() => triggerFakeCall({ callerName: "Mom", duration: 20 })}
+              >
+                Mom
+              </Button>
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={() => triggerFakeCall({ callerName: "Office", duration: 30 })}
+              >
+                Office
+              </Button>
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={() => triggerFakeCall({ callerName: "Emergency", duration: 15 })}
+              >
+                Emergency
+              </Button>
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={() => triggerFakeCall({ callerName: "Doctor", duration: 25 })}
+              >
+                Doctor
+              </Button>
+            </div>
+
+            <Button
+              className="w-full bg-red-500 hover:bg-red-600"
+              onClick={() => triggerFakeCall()}
+            >
               <Phone className="h-4 w-4 mr-2" />
-              Fake Call Now
+              Custom Fake Call
             </Button>
           </CardContent>
         </Card>
@@ -532,6 +649,70 @@ export default function SakhiSuraksha() {
               >
                 Submit Anonymous Report
               </Button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Fake Call Interface */}
+      {showFakeCall && (
+        <div className="fixed inset-0 bg-black z-50 flex flex-col">
+          {/* Status Bar Simulation */}
+          <div className="bg-black text-white text-xs flex justify-between items-center px-4 py-1">
+            <div className="flex items-center space-x-1">
+              <div className="flex space-x-1">
+                <div className="w-1 h-3 bg-white rounded"></div>
+                <div className="w-1 h-3 bg-white rounded"></div>
+                <div className="w-1 h-3 bg-white rounded"></div>
+                <div className="w-1 h-3 bg-gray-400 rounded"></div>
+              </div>
+              <span className="ml-2">Airtel</span>
+            </div>
+            <div>9:47 PM</div>
+            <div className="flex items-center space-x-1">
+              <span>84%</span>
+              <div className="w-6 h-3 border border-white rounded-sm">
+                <div className="w-5 h-2 bg-white rounded-sm"></div>
+              </div>
+            </div>
+          </div>
+
+          {/* Fake Call Interface */}
+          <div className="flex-1 bg-gradient-to-b from-gray-900 to-black text-white flex flex-col justify-between items-center py-12">
+            <div className="text-center">
+              <div className="text-sm text-gray-300 mb-2">Incoming call</div>
+              <div className="w-32 h-32 bg-gray-600 rounded-full mx-auto mb-4 flex items-center justify-center">
+                <User className="h-16 w-16 text-gray-300" />
+              </div>
+              <h2 className="text-2xl font-semibold mb-2">{fakeCallConfig.callerName}</h2>
+              <p className="text-gray-300">+91 99876 54321</p>
+              <p className="text-sm text-gray-400 mt-2">Office</p>
+            </div>
+
+            {/* Call Controls */}
+            <div className="flex justify-center space-x-12">
+              <button
+                onClick={() => setShowFakeCall(false)}
+                className="w-16 h-16 bg-red-500 rounded-full flex items-center justify-center transform active:scale-95 transition-transform"
+              >
+                <Phone className="h-8 w-8 text-white transform rotate-[135deg]" />
+              </button>
+              <button
+                onClick={answerFakeCall}
+                className="w-16 h-16 bg-green-500 rounded-full flex items-center justify-center transform active:scale-95 transition-transform"
+              >
+                <Phone className="h-8 w-8 text-white" />
+              </button>
+            </div>
+
+            {/* Additional Options */}
+            <div className="flex justify-center space-x-8">
+              <button className="w-12 h-12 bg-gray-700 rounded-full flex items-center justify-center">
+                <MessageCircle className="h-6 w-6 text-white" />
+              </button>
+              <button className="w-12 h-12 bg-gray-700 rounded-full flex items-center justify-center">
+                <span className="text-white text-xs">⏰</span>
+              </button>
             </div>
           </div>
         </div>
