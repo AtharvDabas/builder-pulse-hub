@@ -40,6 +40,7 @@ import NyayaDost from "../components/features/NyayaDost";
 // Auth and Rewards Components
 import AuthSystem from "../components/auth/AuthSystem";
 import PointsSystem from "../components/rewards/PointsSystem";
+import { ProgressService, getUserProgress, getDailySummary } from "../lib/progressService";
 
 const sdgFeatures = [
   {
@@ -150,14 +151,44 @@ export default function SarvSankalp() {
   const [language, setLanguage] = useState("en");
   const [showAuth, setShowAuth] = useState(false);
   const [user, setUser] = useState<any>(null);
+  const [userProgress, setUserProgress] = useState<any>(null);
+  const [dailySummary, setDailySummary] = useState<any>(null);
 
   // Load user from localStorage on component mount
   useEffect(() => {
     const savedUser = localStorage.getItem('sarvSankalpUser');
     if (savedUser) {
-      setUser(JSON.parse(savedUser));
+      const userData = JSON.parse(savedUser);
+      setUser(userData);
+      updateProgressData(userData.id);
     }
   }, []);
+
+  // Update progress data when user changes
+  const updateProgressData = (userId: string) => {
+    if (userId) {
+      const progress = getUserProgress(userId);
+      const summary = getDailySummary(userId);
+      setUserProgress(progress);
+      setDailySummary(summary);
+    }
+  };
+
+  // Listen for achievement notifications
+  useEffect(() => {
+    const handleAchievement = (event: CustomEvent) => {
+      const { feature, activity, milestone } = event.detail;
+      alert(`🏆 Achievement Unlocked!\n\n${milestone}% ${activity}\nin ${feature}\n\nKeep up the great work!`);
+
+      // Refresh progress data
+      if (user?.id) {
+        updateProgressData(user.id);
+      }
+    };
+
+    window.addEventListener('achievement-unlocked', handleAchievement as EventListener);
+    return () => window.removeEventListener('achievement-unlocked', handleAchievement as EventListener);
+  }, [user]);
 
   const handleLogin = (userData: any) => {
     setUser(userData);
@@ -377,7 +408,7 @@ export default function SarvSankalp() {
                 <Card>
                   <CardContent className="p-4 text-center">
                     <Award className="h-8 w-8 mx-auto mb-2 text-blue-500" />
-                    <div className="text-2xl font-bold">{user?.points || 0}</div>
+                    <div className="text-2xl font-bold">{userProgress?.totalPoints || 0}</div>
                     <div className="text-sm text-gray-600">{t.totalPoints}</div>
                   </CardContent>
                 </Card>
@@ -385,24 +416,24 @@ export default function SarvSankalp() {
                 <Card>
                   <CardContent className="p-4 text-center">
                     <Star className="h-8 w-8 mx-auto mb-2 text-yellow-500" />
-                    <div className="text-2xl font-bold">Level {user?.level || 1}</div>
+                    <div className="text-2xl font-bold">Level {userProgress?.level || 1}</div>
                     <div className="text-sm text-gray-600">{t.currentLevel}</div>
                   </CardContent>
                 </Card>
-                
+
                 <Card>
                   <CardContent className="p-4 text-center">
                     <Globe className="h-8 w-8 mx-auto mb-2 text-green-500" />
-                    <div className="text-2xl font-bold">7</div>
+                    <div className="text-2xl font-bold">{Object.keys(userProgress?.sdgContributions || {}).length}</div>
                     <div className="text-sm text-gray-600">Active SDGs</div>
                   </CardContent>
                 </Card>
-                
+
                 <Card>
                   <CardContent className="p-4 text-center">
                     <Heart className="h-8 w-8 mx-auto mb-2 text-red-500" />
-                    <div className="text-2xl font-bold">{user?.contributions || 0}</div>
-                    <div className="text-sm text-gray-600">Impact Actions</div>
+                    <div className="text-2xl font-bold">{dailySummary?.activitiesCompleted || 0}</div>
+                    <div className="text-sm text-gray-600">Today's Actions</div>
                   </CardContent>
                 </Card>
               </div>
@@ -417,6 +448,12 @@ export default function SarvSankalp() {
                   <div className="space-y-4">
                     {sdgFeatures.slice(0, 5).map((feature, index) => {
                       const IconComponent = feature.icon;
+                      const featureProgress = user?.id ? ProgressService.getFeatureProgress(user.id, feature.id) : [];
+                      const totalActivities = featureProgress.length;
+                      const avgProgress = totalActivities > 0
+                        ? featureProgress.reduce((sum, p) => sum + (p.value / p.maxValue), 0) / totalActivities * 100
+                        : 0;
+
                       return (
                         <div key={feature.id} className="flex items-center space-x-4">
                           <div className={`w-10 h-10 ${feature.color} rounded-lg flex items-center justify-center flex-shrink-0`}>
@@ -425,9 +462,9 @@ export default function SarvSankalp() {
                           <div className="flex-1">
                             <div className="flex justify-between items-center mb-1">
                               <span className="font-medium text-sm">{feature.title}</span>
-                              <span className="text-sm text-gray-600">{Math.floor(Math.random() * 100)}%</span>
+                              <span className="text-sm text-gray-600">{Math.floor(avgProgress)}%</span>
                             </div>
-                            <Progress value={Math.floor(Math.random() * 100)} className="h-2" />
+                            <Progress value={avgProgress} className="h-2" />
                           </div>
                         </div>
                       );
