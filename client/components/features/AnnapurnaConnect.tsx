@@ -197,7 +197,7 @@ export default function AnnapurnaConnect() {
       return;
     }
 
-    if (!otpSent || otpCode !== generatedOtp) {
+    if (!otpSent) {
       setShowOtpVerification(true);
       return;
     }
