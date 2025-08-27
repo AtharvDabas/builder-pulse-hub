@@ -415,20 +415,23 @@ export default function SarvSankalp() {
                 </CardHeader>
                 <CardContent>
                   <div className="space-y-4">
-                    {sdgFeatures.slice(0, 5).map((feature, index) => (
-                      <div key={feature.id} className="flex items-center space-x-4">
-                        <div className={`w-10 h-10 ${feature.color} rounded-lg flex items-center justify-center flex-shrink-0`}>
-                          <feature.icon className="h-5 w-5 text-white" />
-                        </div>
-                        <div className="flex-1">
-                          <div className="flex justify-between items-center mb-1">
-                            <span className="font-medium text-sm">{feature.title}</span>
-                            <span className="text-sm text-gray-600">{Math.floor(Math.random() * 100)}%</span>
+                    {sdgFeatures.slice(0, 5).map((feature, index) => {
+                      const IconComponent = feature.icon;
+                      return (
+                        <div key={feature.id} className="flex items-center space-x-4">
+                          <div className={`w-10 h-10 ${feature.color} rounded-lg flex items-center justify-center flex-shrink-0`}>
+                            <IconComponent className="h-5 w-5 text-white" />
                           </div>
-                          <Progress value={Math.floor(Math.random() * 100)} className="h-2" />
+                          <div className="flex-1">
+                            <div className="flex justify-between items-center mb-1">
+                              <span className="font-medium text-sm">{feature.title}</span>
+                              <span className="text-sm text-gray-600">{Math.floor(Math.random() * 100)}%</span>
+                            </div>
+                            <Progress value={Math.floor(Math.random() * 100)} className="h-2" />
+                          </div>
                         </div>
-                      </div>
-                    ))}
+                      );
+                    })}
                   </div>
                 </CardContent>
               </Card>

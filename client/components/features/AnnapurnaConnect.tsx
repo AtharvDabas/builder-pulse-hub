@@ -70,7 +70,6 @@ export default function AnnapurnaConnect() {
   const [locationPermission, setLocationPermission] = useState<string>("prompt");
   const [otpSent, setOtpSent] = useState(false);
   const [otpCode, setOtpCode] = useState("");
-  const [generatedOtp, setGeneratedOtp] = useState("");
 
   const [donationForm, setDonationForm] = useState({
     donorName: "",
@@ -119,27 +118,76 @@ export default function AnnapurnaConnect() {
     }));
   };
 
-  const sendOtp = () => {
+  const sendOtp = async () => {
     if (!donationForm.contact) {
       alert("Please enter your phone number first");
       return;
     }
-    
-    // Generate 6-digit OTP
-    const otp = Math.floor(100000 + Math.random() * 900000).toString();
-    setGeneratedOtp(otp);
-    setOtpSent(true);
-    
-    // Simulate SMS sending
-    alert(`OTP sent to ${donationForm.contact}\nYour OTP: ${otp}\n(In real app, this would be sent via SMS)`);
+
+    try {
+      const response = await fetch('/api/otp/send', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          phoneNumber: donationForm.contact,
+          purpose: 'food donation verification'
+        })
+      });
+
+      const data = await response.json();
+
+      if (data.success) {
+        setOtpSent(true);
+        // In development mode, show OTP for testing
+        if (data.otp) {
+          alert(`OTP sent to ${donationForm.contact}\nFor testing: ${data.otp}\n(Valid for ${Math.floor(data.expiresIn / 60)} minutes)`);
+        } else {
+          alert(`OTP sent to ${donationForm.contact}\nValid for ${Math.floor(data.expiresIn / 60)} minutes`);
+        }
+      } else {
+        alert(`Failed to send OTP: ${data.message}`);
+      }
+    } catch (error) {
+      console.error('OTP send error:', error);
+      alert('Failed to send OTP. Please check your network connection.');
+    }
   };
 
-  const verifyOtp = () => {
-    if (otpCode === generatedOtp) {
-      setShowOtpVerification(false);
-      handleSubmitDonation();
-    } else {
-      alert("Invalid OTP. Please try again.");
+  const verifyOtp = async () => {
+    if (!otpCode || otpCode.length !== 6) {
+      alert("Please enter a valid 6-digit OTP");
+      return;
+    }
+
+    try {
+      const response = await fetch('/api/otp/verify', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          phoneNumber: donationForm.contact,
+          otp: otpCode
+        })
+      });
+
+      const data = await response.json();
+
+      if (data.success) {
+        setShowOtpVerification(false);
+        handleSubmitDonation();
+      } else {
+        if (data.attemptsLeft !== undefined) {
+          alert(`Invalid OTP. ${data.attemptsLeft} attempts remaining.`);
+        } else {
+          alert(`OTP verification failed: ${data.message}`);
+        }
+      }
+    } catch (error) {
+      console.error('OTP verification error:', error);
+      alert('Failed to verify OTP. Please check your network connection.');
     }
   };
 
