@@ -18,6 +18,7 @@ import {
   Navigation,
   MessageSquare
 } from "lucide-react";
+import { ContactService } from "../../lib/contactService";
 
 const foodDonations = [
   {
@@ -455,13 +456,13 @@ export default function AnnapurnaConnect() {
                             >
                               Claim Verified Donation
                             </Button>
-                            <Button 
-                              size="sm" 
+                            <Button
+                              size="sm"
                               variant="outline"
-                              onClick={() => window.open(`tel:${donation.contact}`, '_self')}
+                              onClick={() => ContactService.makeCall(donation.contact, `Food donation: ${donation.food} - ${donation.quantity}`)}
                             >
                               <Phone className="h-4 w-4 mr-1" />
-                              Call
+                              Call Donor
                             </Button>
                             <Button 
                               size="sm" 
@@ -502,13 +503,13 @@ export default function AnnapurnaConnect() {
                         )}
                       </div>
                       <p className="text-sm text-gray-600 mb-2">Coverage: {ngo.area}</p>
-                      <Button 
-                        size="sm" 
+                      <Button
+                        size="sm"
                         variant="outline"
-                        onClick={() => window.open(`tel:${ngo.contact}`, '_self')}
+                        onClick={() => ContactService.makeCall(ngo.contact, `Partner NGO: ${ngo.name} - ${ngo.area}`)}
                       >
                         <Phone className="h-4 w-4 mr-1" />
-                        Contact
+                        Contact NGO
                       </Button>
                     </div>
                   ))}

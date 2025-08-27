@@ -6,6 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Shield, AlertTriangle, Phone, MessageCircle, Users, MapPin, Clock, Navigation } from "lucide-react";
+import { ContactService } from "../../lib/contactService";
 
 const emergencyContacts = [
   { 
@@ -148,8 +149,8 @@ export default function SakhiSuraksha() {
     setCountdown(0);
   };
 
-  const makeCall = (number: string) => {
-    window.open(`tel:${number}`, "_self");
+  const makeCall = (number: string, context?: string) => {
+    ContactService.makeCall(number, context || "Emergency contact");
   };
 
   const triggerFakeCall = (customConfig = {}) => {
@@ -382,9 +383,9 @@ export default function SakhiSuraksha() {
                     >
                       {contact.number}
                     </Badge>
-                    <Button 
-                      size="sm" 
-                      onClick={() => makeCall(contact.number)}
+                    <Button
+                      size="sm"
+                      onClick={() => makeCall(contact.number, `${contact.name} - ${contact.description}`)}
                       className="bg-green-500 hover:bg-green-600"
                     >
                       <Phone className="h-4 w-4" />
@@ -420,14 +421,18 @@ export default function SakhiSuraksha() {
                     </div>
                   </div>
                   <div className="flex space-x-2">
-                    <Button 
-                      size="sm" 
+                    <Button
+                      size="sm"
                       variant="outline"
-                      onClick={() => makeCall(contact.phone.replace(/\s/g, ""))}
+                      onClick={() => makeCall(contact.phone.replace(/\s/g, ""), `Safety network contact: ${contact.name} (${contact.relation})`)}
                     >
                       <Phone className="h-4 w-4" />
                     </Button>
-                    <Button size="sm" variant="outline">
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => ContactService.sendMessage(contact.phone.replace(/\s/g, ""), "Emergency - Need help immediately. Please contact me.", 'whatsapp')}
+                    >
                       <MessageCircle className="h-4 w-4" />
                     </Button>
                   </div>
