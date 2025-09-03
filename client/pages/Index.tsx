@@ -31,7 +31,6 @@ import SehatSathi from "../components/features/SehatSathi";
 import PathshalaPocket from "../components/features/PathshalaPocket";
 import SakhiSuraksha from "../components/features/SakhiSuraksha";
 import JalRakshak from "../components/features/JalRakshak";
-import SkillhoodLite from "../components/features/SkillhoodLite";
 import SaksinGreen from "../components/features/SaksinGreen";
 import CarbonKart from "../components/features/CarbonKart";
 import MittiMitra from "../components/features/MittiMitra";
@@ -92,16 +91,6 @@ const sdgFeatures = [
     color: "bg-cyan-500",
     sdgColor: "from-cyan-400 to-blue-500",
     sdgNumber: "SDG 6"
-  },
-  {
-    id: "skillhood",
-    title: "Skillhood",
-    subtitle: "Decent Work",
-    description: "AI skill builder with 1000+ skills and LinkedIn job integration",
-    icon: Handshake,
-    color: "bg-purple-500",
-    sdgColor: "from-purple-400 to-violet-500",
-    sdgNumber: "SDG 8"
   },
   {
     id: "saksin",
@@ -214,7 +203,6 @@ export default function SarvSankalp() {
       case "pathshala": return <PathshalaPocket />;
       case "sakhi": return <SakhiSuraksha />;
       case "jal": return <JalRakshak />;
-      case "skillhood": return <SkillhoodLite />;
       case "saksin": return <SaksinGreen />;
       case "carbon": return <CarbonKart />;
       case "mitti": return <MittiMitra />;
