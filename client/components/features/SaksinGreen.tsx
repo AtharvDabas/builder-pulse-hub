@@ -21,6 +21,8 @@ import {
   Zap
 } from "lucide-react";
 
+import { ProgressService } from "@/lib/progressService";
+
 const scannedProducts = [
   {
     id: 1,
@@ -149,6 +151,38 @@ export default function SaksinGreen() {
     // Generate scan result
     const result = generateScanResult(codeToScan);
     setScanResult(result);
+
+    try {
+      const savedUser = localStorage.getItem('sarvSankalpUser');
+      const userId = savedUser ? JSON.parse(savedUser).id : 'guest';
+
+      ProgressService.trackActivity(userId, 'saksin', 'products_scanned', 1, {
+        barcode: codeToScan,
+        found: !!result?.found,
+        name: result?.name || null
+      });
+
+      if (result && result.found) {
+        ProgressService.trackActivity(userId, 'saksin', 'barcodes_verified', 1, {
+          barcode: result.barcode
+        });
+
+        ProgressService.trackActivity(userId, 'saksin', 'sustainability_scores', 1, {
+          overallRating: result.overallRating,
+          trustedClaims: result.trustedClaims,
+          falseClaimCount: result.falseClaimCount
+        });
+
+        if (Array.isArray(result.diyProjects) && result.diyProjects.length > 0) {
+          ProgressService.trackActivity(userId, 'saksin', 'eco_recommendations', result.diyProjects.length, {
+            diyProjects: result.diyProjects
+          });
+        }
+      }
+    } catch (e) {
+      console.error('Progress tracking failed:', e);
+    }
+
     setIsScanning(false);
   };
 
