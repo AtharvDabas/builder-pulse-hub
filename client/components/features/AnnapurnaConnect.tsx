@@ -232,6 +232,7 @@ export default function AnnapurnaConnect() {
     setShowDonateForm(false);
     setOtpSent(false);
     setOtpCode("");
+    setGeneratedOtp(null);
     setDonationForm({
       donorName: "",
       donorType: "restaurant",
