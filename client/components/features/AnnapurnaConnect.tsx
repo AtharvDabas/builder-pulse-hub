@@ -71,6 +71,7 @@ export default function AnnapurnaConnect() {
   const [locationPermission, setLocationPermission] = useState<string>("prompt");
   const [otpSent, setOtpSent] = useState(false);
   const [otpCode, setOtpCode] = useState("");
+  const [generatedOtp, setGeneratedOtp] = useState<string | null>(null);
 
   const [donationForm, setDonationForm] = useState({
     donorName: "",
@@ -137,18 +138,34 @@ export default function AnnapurnaConnect() {
         })
       });
 
-      const data = await response.json();
+      let data: any = null;
 
-      if (data.success) {
+      // Robustly parse JSON body — some environments may pre-read the stream
+      try {
+        data = await response.json();
+      } catch (jsonErr) {
+        console.warn('response.json() failed, attempting text parse', jsonErr);
+        try {
+          const txt = await response.text();
+          data = txt ? JSON.parse(txt) : { success: response.ok };
+        } catch (textErr) {
+          console.warn('response.text() JSON parse failed', textErr);
+          data = { success: response.ok, message: 'Unable to parse response body' };
+        }
+      }
+
+      if (data && data.success) {
         setOtpSent(true);
-        // In development mode, show OTP for testing
+        // Save generated OTP in dev mode for UI verification
         if (data.otp) {
+          setGeneratedOtp(String(data.otp));
           alert(`OTP sent to ${donationForm.contact}\nFor testing: ${data.otp}\n(Valid for ${Math.floor(data.expiresIn / 60)} minutes)`);
         } else {
-          alert(`OTP sent to ${donationForm.contact}\nValid for ${Math.floor(data.expiresIn / 60)} minutes`);
+          setGeneratedOtp(null);
+          alert(`OTP sent to ${donationForm.contact}\nValid for ${Math.floor((data.expiresIn || 300) / 60)} minutes`);
         }
       } else {
-        alert(`Failed to send OTP: ${data.message}`);
+        alert(`Failed to send OTP: ${data?.message || 'Unknown error'}`);
       }
     } catch (error) {
       console.error('OTP send error:', error);
